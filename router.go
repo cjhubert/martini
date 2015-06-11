@@ -146,14 +146,20 @@ func (r *router) Handle(res http.ResponseWriter, req *http.Request, context Cont
 // GetMatchedRoute will return a Martini route if one is found
 // given a method and path. If no route is found, nil is returned
 func (r *router) GetMatchedRoute(method string, path string) Route {
-	for _, route := range r.routes {
-		ok, _ := route.Match(method, path)
-		if ok {
-			return route
+	bestMatch := NoMatch
+	var bestRoute *route
+	for _, route := range r.getRoutes() {
+		match, _ := route.Match(method, path)
+		if match.BetterThan(bestMatch) {
+			bestMatch = match
+			bestRoute = route
+			if match == ExactMatch {
+				break
+			}
 		}
 	}
 
-	return nil
+	return bestRoute
 }
 
 func (r *router) NotFound(handler ...Handler) {
